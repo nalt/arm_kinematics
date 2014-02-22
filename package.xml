@@ -1,0 +1,25 @@
+<package>
+  <name>arm_kinematics</name>
+  <description>
+    A generic package for computing both forward and backward kinematics for arms.
+    Developed as an alternative to pr2_arm_kinematics for people not using the PR2. 
+  </description>
+  <version>0.0.0</version>
+  <author>David V. Lu!!</author>
+  <maintainer email="none@ros.org">None</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/arm_kinematics</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf_conversions</build_depend>
+  <build_depend>kdl_parser</build_depend>
+  <build_depend>moveit_msgs</build_depend>
+  <build_depend>urdf</build_depend>
+
+</package>
+
+

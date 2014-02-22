@@ -9,10 +9,12 @@
 #include <kdl/chainiksolverpos_nr_jl.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
-#include <kinematics_msgs/GetPositionFK.h>
-#include <kinematics_msgs/GetPositionIK.h>
-#include <kinematics_msgs/GetKinematicSolverInfo.h>
-#include <kinematics_msgs/KinematicSolverInfo.h>
+#include <moveit_msgs/GetPositionFK.h>
+#include <moveit_msgs/GetPositionIK.h>
+#include <moveit_msgs/GetKinematicSolverInfo.h>
+#include <moveit_msgs/KinematicSolverInfo.h>
+#include <urdf/model.h>
+
 using std::string;
 
 static const std::string IK_SERVICE = "get_ik";
@@ -41,7 +43,7 @@ class Kinematics {
 
         tf::TransformListener tf_listener;
 
-        kinematics_msgs::KinematicSolverInfo info;
+        moveit_msgs::KinematicSolverInfo info;
 
         bool loadModel(const std::string xml);
         bool readJoints(urdf::Model &robot_model);
@@ -53,32 +55,32 @@ class Kinematics {
          * @param A request message. See service definition for GetPositionIK for more information on this message.
          * @param The response message. See service definition for GetPositionIK for more information on this message.
          */
-        bool getPositionIK(kinematics_msgs::GetPositionIK::Request &request,
-                           kinematics_msgs::GetPositionIK::Response &response);
+        bool getPositionIK(moveit_msgs::GetPositionIK::Request &request,
+                           moveit_msgs::GetPositionIK::Response &response);
 
         /**
          * @brief This is the basic kinematics info service that will return information about the kinematics node.
          * @param A request message. See service definition for GetKinematicSolverInfo for more information on this message.
          * @param The response message. See service definition for GetKinematicSolverInfo for more information on this message.
          */
-        bool getIKSolverInfo(kinematics_msgs::GetKinematicSolverInfo::Request &request,
-                             kinematics_msgs::GetKinematicSolverInfo::Response &response);
+        bool getIKSolverInfo(moveit_msgs::GetKinematicSolverInfo::Request &request,
+                             moveit_msgs::GetKinematicSolverInfo::Response &response);
 
         /**
          * @brief This is the basic kinematics info service that will return information about the kinematics node.
          * @param A request message. See service definition for GetKinematicSolverInfo for more information on this message.
          * @param The response message. See service definition for GetKinematicSolverInfo for more information on this message.
          */
-        bool getFKSolverInfo(kinematics_msgs::GetKinematicSolverInfo::Request &request,
-                             kinematics_msgs::GetKinematicSolverInfo::Response &response);
+        bool getFKSolverInfo(moveit_msgs::GetKinematicSolverInfo::Request &request,
+                             moveit_msgs::GetKinematicSolverInfo::Response &response);
 
         /**
          * @brief This is the basic forward kinematics service that will return information about the kinematics node.
          * @param A request message. See service definition for GetPositionFK for more information on this message.
          * @param The response message. See service definition for GetPositionFK for more information on this message.
          */
-        bool getPositionFK(kinematics_msgs::GetPositionFK::Request &request,
-                           kinematics_msgs::GetPositionFK::Response &response);
+        bool getPositionFK(moveit_msgs::GetPositionFK::Request &request,
+                           moveit_msgs::GetPositionFK::Response &response);
 };
 
 
@@ -241,8 +243,8 @@ int Kinematics::getKDLSegmentIndex(const std::string &name) {
     return -1;
 }
 
-bool Kinematics::getPositionIK(kinematics_msgs::GetPositionIK::Request &request,
-                               kinematics_msgs::GetPositionIK::Response &response) {
+bool Kinematics::getPositionIK(moveit_msgs::GetPositionIK::Request &request,
+                               moveit_msgs::GetPositionIK::Response &response) {
 
     geometry_msgs::PoseStamped pose_msg_in = request.ik_request.pose_stamped;
     tf::Stamped<tf::Pose> transform;
@@ -254,11 +256,12 @@ bool Kinematics::getPositionIK(kinematics_msgs::GetPositionIK::Request &request,
     KDL::JntArray jnt_pos_out;
     jnt_pos_in.resize(num_joints);
     for (unsigned int i=0; i < num_joints; i++) {
-        int tmp_index = getJointIndex(request.ik_request.ik_seed_state.joint_state.name[i]);
+        // nalt: mod for moveit msgs
+        int tmp_index = getJointIndex(request.ik_request.robot_state.joint_state.name[i]);
         if (tmp_index >=0) {
-            jnt_pos_in(tmp_index) = request.ik_request.ik_seed_state.joint_state.position[i];
+            jnt_pos_in(tmp_index) = request.ik_request.robot_state.joint_state.position[i];
         } else {
-            ROS_ERROR("i: %d, No joint index for %s",i,request.ik_request.ik_seed_state.joint_state.name[i].c_str());
+            ROS_ERROR("i: %d, No joint index for %s",i,request.ik_request.robot_state.joint_state.name[i].c_str());
         }
     }
 
@@ -292,20 +295,20 @@ bool Kinematics::getPositionIK(kinematics_msgs::GetPositionIK::Request &request,
     }
 }
 
-bool Kinematics::getIKSolverInfo(kinematics_msgs::GetKinematicSolverInfo::Request &request,
-                                 kinematics_msgs::GetKinematicSolverInfo::Response &response) {
+bool Kinematics::getIKSolverInfo(moveit_msgs::GetKinematicSolverInfo::Request &request,
+                                 moveit_msgs::GetKinematicSolverInfo::Response &response) {
     response.kinematic_solver_info = info;
     return true;
 }
 
-bool Kinematics::getFKSolverInfo(kinematics_msgs::GetKinematicSolverInfo::Request &request,
-                                 kinematics_msgs::GetKinematicSolverInfo::Response &response) {
+bool Kinematics::getFKSolverInfo(moveit_msgs::GetKinematicSolverInfo::Request &request,
+                                 moveit_msgs::GetKinematicSolverInfo::Response &response) {
     response.kinematic_solver_info = info;
     return true;
 }
 
-bool Kinematics::getPositionFK(kinematics_msgs::GetPositionFK::Request &request,
-                               kinematics_msgs::GetPositionFK::Response &response) {
+bool Kinematics::getPositionFK(moveit_msgs::GetPositionFK::Request &request,
+                               moveit_msgs::GetPositionFK::Response &response) {
     KDL::Frame p_out;
     KDL::JntArray jnt_pos_in;
     geometry_msgs::PoseStamped pose;
@@ -343,7 +346,7 @@ bool Kinematics::getPositionFK(kinematics_msgs::GetPositionFK::Request &request,
             response.error_code.val = response.error_code.SUCCESS;
         } else {
             ROS_ERROR("Could not compute FK for %s",request.fk_link_names[i].c_str());
-            response.error_code.val = response.error_code.NO_FK_SOLUTION;
+            response.error_code.val = response.error_code.FAILURE; // was: NO_FK_SOLUTION;
             valid = false;
         }
     }
